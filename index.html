@@ -173,6 +173,33 @@
     color: var(--color-blue);
   }
 
+  /* Same weight/size as .btn-primary, blue accent instead of amber —
+     used for actions that aren't the "main" path (e.g. side content) */
+  .btn-primary--blue{
+    border-color: var(--color-blue-dim);
+    color: var(--color-blue);
+  }
+
+  .btn-primary--blue:hover, .btn-primary--blue:focus-visible{
+    border-color: var(--color-blue);
+    box-shadow: 0 0 18px var(--color-blue-glow);
+  }
+
+  .intro-actions{
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 480px){
+    .intro-actions{
+      flex-direction: column;
+      align-items: center;
+      gap: 0.9rem;
+    }
+  }
+
   /* ==========================================================
      SHARED PUZZLE ELEMENTS
      ========================================================== */
@@ -528,6 +555,103 @@
   }
 
   /* ==========================================================
+     CHARACTERS OVERLAY
+     ========================================================== */
+  .overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 5vh 1.2rem;
+    background: rgba(6, 6, 6, 0.92);
+    opacity: 0;
+    transition: opacity var(--transition-med);
+  }
+
+  .overlay.is-open{
+    display: flex;
+  }
+
+  .overlay.is-visible{
+    opacity: 1;
+  }
+
+  .overlay__panel{
+    position: relative;
+    width: 100%;
+    max-width: 920px;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #100f0e 0%, #0a0a0a 100%);
+    border: 1px solid var(--color-border);
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+  }
+
+  .overlay__close{
+    position: absolute;
+    top: 0.8rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    color: var(--color-text-faint);
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0.5rem 0.7rem;
+    transition: color var(--transition-med);
+  }
+
+  .overlay__close:hover, .overlay__close:focus-visible{
+    color: var(--color-blue);
+    outline: none;
+  }
+
+  .characters-title{
+    font-size: clamp(1.6rem, 4vw, 2.1rem);
+    color: var(--color-text);
+  }
+
+  .character-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 2.4rem 0 1.6rem;
+    text-align: left;
+  }
+
+  .character-card{
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.015);
+    padding: 1.7rem 1.8rem;
+  }
+
+  .character-name{
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--color-blue);
+    margin-bottom: 0.4rem;
+  }
+
+  .character-meta{
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    color: var(--color-text-faint);
+    margin-bottom: 1rem;
+  }
+
+  .character-desc{
+    font-family: var(--font-body);
+    font-style: italic;
+    font-size: 0.98rem;
+    line-height: 1.65;
+    color: var(--color-text-dim);
+  }
+
+  /* ==========================================================
      OPENING SEQUENCE — "life flashing before your eyes"
      Plays once on load, before the intro screen. See the matching
      JS block (search "OPENING SEQUENCE") for the beat timing.
@@ -670,7 +794,10 @@
     <div class="screen__inner">
       <!-- SWAP: opening line -->
       <p class="intro-line">Alguém aqui ainda espera por uma resposta que nunca chegou.</p>
-      <button class="btn-primary" id="btn-start" type="button">Entrar</button>
+      <div class="intro-actions">
+        <button class="btn-primary" id="btn-start" type="button">Entrar</button>
+        <button class="btn-primary btn-primary--blue" id="btn-characters" type="button">Ver os personagens</button>
+      </div>
     </div>
   </section>
 
@@ -809,6 +936,22 @@
     </div>
   </section>
 
+  <!-- ==========================================================
+       CHARACTERS OVERLAY — opened from screen-intro's second button
+       ========================================================== -->
+  <div class="overlay" id="characters-overlay" aria-hidden="true">
+    <div class="overlay__panel" role="dialog" aria-modal="true" aria-labelledby="characters-title">
+      <button class="overlay__close" id="characters-close" type="button" aria-label="Fechar">&times;</button>
+      <span class="puzzle-label">Antes de começar</span>
+      <h2 class="characters-title" id="characters-title">Os personagens</h2>
+
+      <!-- SWAP: character list (CONFIG.characters below) -->
+      <div class="character-grid" id="character-grid"></div>
+
+      <button class="btn-secondary" id="characters-back" type="button">voltar</button>
+    </div>
+  </div>
+
 <script>
 (function(){
   "use strict";
@@ -835,6 +978,37 @@
     },
     // SWAP: the full word required on the unlock screen
     finalWord: "ESQUECIMENTO",
+
+    // SWAP: the five pre-made characters shown in the "Ver os personagens"
+    // overlay. Keep it spoiler-free — no cause of death here, that's
+    // revealed only during the session.
+    characters: [
+      {
+        name: 'Amanda "Manda" Torres',
+        meta: "24 anos · Florista · Sem Guilda",
+        desc: "Manda criava o irmão mais novo sozinha desde que a mãe morreu, três anos atrás. Trabalhava numa floricultura pequena, sempre correndo entre contas, escola e o jantar que precisava estar pronto antes que ele voltasse com fome. Não sobrava muito tempo pra ela mesma — e talvez fosse assim que ela preferia."
+      },
+      {
+        name: "Inspetor Henrique Teles",
+        meta: "58 anos · Ex-detetive · Monitor",
+        desc: "Trinta e um anos de farda, boa parte deles gastos perseguindo casos que ninguém mais queria tocar. Tinha um talento perigoso: nunca soltava uma investigação, mesmo quando devia. A família aprendeu, aos poucos, a não esperar por ele nos jantares."
+      },
+      {
+        name: "Dona Rosa Andrade",
+        meta: "67 anos · Diretora de funerária · Pranteadora",
+        desc: "Rosa dirigiu uma funerária pequena por quase quarenta anos, sabendo sempre a palavra certa pro luto de um estranho. Guardava, em segredo, um luto próprio, antigo demais pra ainda doer em voz alta — e cedo demais pra alguém como ela largar de cuidar dos outros por tempo suficiente pra cuidar de si."
+      },
+      {
+        name: 'Kai "Vitrine" Delgado',
+        meta: "29 anos · Mímico e ator de rua · Marionetista",
+        desc: "Kai vivia de aplausos pequenos e esquecimento rápido — um artista de rua que fazia estranhos sorrirem por alguns minutos e seguirem a vida sem lembrar seu nome. Bebia mais do que devia depois dos shows ruins, e não sabia, ainda, o quanto isso ia custar."
+      },
+      {
+        name: "Professora Elin Voss",
+        meta: "44 anos · Pesquisadora universitária · Mascarada",
+        desc: "Elin era brilhante e cada vez mais invisível — via seu trabalho ser creditado a outros, os convites pararem de chegar, as conversas ficarem mais curtas até quase não existirem mais. Ninguém fez isso de propósito. Foi só o jeito como o mundo esquece devagar quem já não faz barulho."
+      }
+    ],
 
     chronicle: {
       // SWAP: all invitation copy
@@ -997,6 +1171,58 @@
      ============================================================ */
   document.getElementById("btn-start").addEventListener("click", () => {
     goToScreen("screen-puzzle-1");
+  });
+
+  /* ============================================================
+     CHARACTERS OVERLAY
+     ============================================================ */
+  const charactersOverlay = document.getElementById("characters-overlay");
+  const characterGrid = document.getElementById("character-grid");
+
+  CONFIG.characters.forEach((character) => {
+    const card = document.createElement("article");
+    card.className = "character-card";
+
+    const name = document.createElement("h3");
+    name.className = "character-name";
+    name.textContent = character.name;
+
+    const meta = document.createElement("p");
+    meta.className = "character-meta";
+    meta.textContent = character.meta;
+
+    const desc = document.createElement("p");
+    desc.className = "character-desc";
+    desc.textContent = character.desc;
+
+    card.appendChild(name);
+    card.appendChild(meta);
+    card.appendChild(desc);
+    characterGrid.appendChild(card);
+  });
+
+  function openCharacters(){
+    charactersOverlay.classList.add("is-open");
+    charactersOverlay.setAttribute("aria-hidden", "false");
+    void charactersOverlay.offsetWidth; // force reflow so the opacity transition runs
+    requestAnimationFrame(() => charactersOverlay.classList.add("is-visible"));
+  }
+
+  function closeCharacters(){
+    charactersOverlay.classList.remove("is-visible");
+    charactersOverlay.setAttribute("aria-hidden", "true");
+    setTimeout(() => {
+      charactersOverlay.classList.remove("is-open");
+    }, prefersReducedMotion ? 0 : 500);
+  }
+
+  document.getElementById("btn-characters").addEventListener("click", openCharacters);
+  document.getElementById("characters-close").addEventListener("click", closeCharacters);
+  document.getElementById("characters-back").addEventListener("click", closeCharacters);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && charactersOverlay.classList.contains("is-open")){
+      closeCharacters();
+    }
   });
 
   /* ============================================================
